@@ -1,0 +1,8 @@
+
+path: data/yolo
+train: images/train
+val: images/val
+test: images/test
+
+nc: 2
+names: ['bad beans', 'good beans']

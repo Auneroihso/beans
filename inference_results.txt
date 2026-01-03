@@ -1,0 +1,7 @@
+Image: data/yolo/images/test/IMG_20251203_070539.jpg
+Good beans: 1
+Bad beans: 0
+Total beans: 1
+
+Details:
+  Bean 1: Good (confidence: 0.88)
