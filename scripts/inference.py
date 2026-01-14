@@ -10,7 +10,7 @@ from ultralytics import YOLO
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description='Bean Sorting Inference with YOLOv11')
+        description='Bean Sorting Inference with YOLO11n')
     parser.add_argument('--model', type=str,
                         default='trained_model/my_model.pt',
                         help='Path to trained model weights')

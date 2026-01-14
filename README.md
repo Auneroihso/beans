@@ -4,7 +4,7 @@
 
 The **Bean Sorter** is an AI-powered computer vision system designed to identify and classify beans for automated sorting. This project serves as **Part One** of a larger system, establishing the core intelligence needed to drive an electromechanical sorting mechanism.
 
-Using a custom-trained **YOLOv11** model, the system distinguishes between:
+Using a custom-trained **YOLO11n** model, the system distinguishes between:
 - **Good Beans** (Class 1, Green): Beans that meet quality standards.
 - **Bad Beans** (Class 0, Red): Beans that are defective and should be rejected.
 
@@ -12,7 +12,7 @@ The ultimate goal of this trained model is to interface with hardware that physi
 
 ## ✨ Key Features
 
-- **Real-time Classification:** High-speed identification of bean quality using YOLOv11.
+- **Real-time Classification:** High-speed identification of bean quality using YOLO11n.
 - **Sorting Logic:** Clearly distinguishes 'Good' vs 'Bad' beans for downstream hardware triggers.
 - **Visual Feedback:** Color-coded bounding boxes (Green for Good, Red for Bad) for easy monitoring.
 - **Multiple Inputs:** Supports live webcam feeds, video files, and image datasets.
@@ -84,7 +84,7 @@ python scripts/run_trained_model.py --source 0
 │   ├── inference.py       # Main application with CLI and Web modes
 │   └── run_trained_model.py # Simplified inference runner
 ├── trained_model/
-│   └── my_model.pt        # Trained YOLOv11 weights
+│   └── my_model.pt        # Trained YOLO11n weights
 ├── inference_results.txt  # Output log (optional)
 └── README.md              # Project documentation
 ```
