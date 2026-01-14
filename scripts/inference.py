@@ -2,11 +2,13 @@ import argparse
 import base64
 import time
 import csv
+import io
+import os
 from pathlib import Path
 from datetime import datetime
 import cv2
 import numpy as np
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_file, Response
 from ultralytics import YOLO
 
 # Import for reporting
@@ -17,6 +19,15 @@ try:
 except ImportError:
     REPORTING_AVAILABLE = False
     print("[WARN] matplotlib or fpdf not found. Advanced reporting disabled.")
+
+# Global Session State
+HISTORY = []
+SESSION_STATS = {
+    'good': 0,
+    'bad': 0,
+    'total': 0,
+    'frames': 0
+}
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -53,25 +64,30 @@ def load_model(args):
     model = YOLO(str(model_path))
     return model
 
+def generate_csv_buffer(history):
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Frame/ID", "Timestamp", "Good Beans", "Bad Beans", "Total", "Inference Time (ms)"])
+    for row in history:
+        writer.writerow([
+            row['frame'],
+            row['timestamp'],
+            row['good'],
+            row['bad'],
+            row['good'] + row['bad'],
+            f"{row['inference_ms']:.2f}"
+        ])
+    return output.getvalue()
+
 def generate_csv_report(history, output_path="report.csv"):
     with open(output_path, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(["Frame/ID", "Timestamp", "Good Beans", "Bad Beans", "Total", "Inference Time (ms)"])
-        for row in history:
-            writer.writerow([
-                row['frame'],
-                row['timestamp'],
-                row['good'],
-                row['bad'],
-                row['good'] + row['bad'],
-                f"{row['inference_ms']:.2f}"
-            ])
+        f.write(generate_csv_buffer(history))
     print(f"[INFO] CSV Report saved to {output_path}")
 
-def generate_pdf_report(history, summary, output_path="report.pdf"):
+def generate_pdf_to_file(history, summary, output_path="report.pdf"):
     if not REPORTING_AVAILABLE:
         print("[ERROR] Cannot generate PDF. Install matplotlib and fpdf.")
-        return
+        return False
 
     # Generate charts
     total_good = summary['total_good']
@@ -141,7 +157,7 @@ def generate_pdf_report(history, summary, output_path="report.pdf"):
     Path('temp_pie_chart.png').unlink(missing_ok=True)
     Path('temp_timeline.png').unlink(missing_ok=True)
 
-    print(f"[INFO] PDF Report saved to {output_path}")
+    return True
 
 def run_inference(model, args):
     # Determine source type
@@ -312,11 +328,53 @@ def run_inference(model, args):
                 'total_good': total_good,
                 'total_bad': total_bad
             }
-            generate_pdf_report(history, summary)
+            generate_pdf_to_file(history, summary, "report.pdf")
+            print("[INFO] PDF Report saved to report.pdf")
 
 
 def run_flask_server(model, args):
-    app = Flask(__name__)
+    # Set template folder explicitly
+    app = Flask(__name__, template_folder='templates')
+
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+
+    @app.route('/reset', methods=['POST'])
+    def reset_session():
+        global HISTORY, SESSION_STATS
+        HISTORY = []
+        SESSION_STATS = {'good': 0, 'bad': 0, 'total': 0, 'frames': 0}
+        return jsonify({'status': 'cleared'})
+
+    @app.route('/download/csv')
+    def download_csv():
+        csv_data = generate_csv_buffer(HISTORY)
+        return Response(
+            csv_data,
+            mimetype="text/csv",
+            headers={"Content-disposition": "attachment; filename=session_report.csv"}
+        )
+
+    @app.route('/download/pdf')
+    def download_pdf():
+        if not REPORTING_AVAILABLE:
+            return "Reporting module not available (matplotlib/fpdf missing)", 500
+
+        pdf_path = "session_report.pdf"
+        summary = {
+            'source': "Web Session",
+            'model': str(args.model),
+            'frames': SESSION_STATS['frames'],
+            'total_good': SESSION_STATS['good'],
+            'total_bad': SESSION_STATS['bad']
+        }
+
+        success = generate_pdf_to_file(HISTORY, summary, pdf_path)
+        if success:
+            return send_file(pdf_path, as_attachment=True)
+        else:
+            return "Error generating PDF", 500
 
     @app.route('/process', methods=['POST'])
     def process_image():
@@ -332,9 +390,10 @@ def run_flask_server(model, args):
             img = base64.b64decode(image_data)
             nparr = np.frombuffer(img, np.uint8)
             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        #except Exception as e:
         except (ValueError, TypeError) as e:
             return jsonify({'error': str(e)}), 400
+
+        start_time = time.time()
 
         results = model.predict(
             source=frame,
@@ -372,10 +431,29 @@ def run_flask_server(model, args):
         _, buffer = cv2.imencode('.jpg', processed_frame)
         processed_image_base64 = base64.b64encode(buffer).decode('utf-8')
 
+        # Update Session Stats
+        SESSION_STATS['frames'] += 1
+        SESSION_STATS['good'] += good_count
+        SESSION_STATS['bad'] += bad_count
+        SESSION_STATS['total'] += (good_count + bad_count)
+
+        # Record History
+        inference_time = (time.time() - start_time) * 1000
+        HISTORY.append({
+            'frame': SESSION_STATS['frames'],
+            'timestamp': datetime.now().isoformat(),
+            'good': good_count,
+            'bad': bad_count,
+            'inference_ms': inference_time
+        })
+
         return jsonify({
             'good': good_count,
             'bad': bad_count,
             'total': good_count + bad_count,
+            'session_good': SESSION_STATS['good'],
+            'session_bad': SESSION_STATS['bad'],
+            'session_total': SESSION_STATS['total'],
             'confidence': args.conf,
             'processedImage': f"data:image/jpeg;base64,{processed_image_base64}"
         })
