@@ -12,7 +12,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description='Bean Sorting Inference with YOLOv11')
     parser.add_argument('--model', type=str,
-                        default='runs/detect/train11/weights/best.pt',
+                        default='trained_model/my_model.pt',
                         help='Path to trained model weights')
     parser.add_argument('--source', type=str, default='0',
                         help='Video source (0 for webcam, or path to video/image file)')
@@ -108,8 +108,8 @@ def run_inference(model, args):
 
             for bbox, cls, conf in zip(boxes, classes, confidences):
                 x1, y1, x2, y2 = map(int, bbox)
-                # Class 0 = good, Class 1 = bad (as per data.yaml)
-                if cls == 0:
+                # Class 0 = bad, Class 1 = good (as per data.yaml)
+                if cls == 1:
                     color = (0, 255, 0)  # Green for good
                     label = f"good {conf:.2f}"
                     good_count += 1
@@ -225,7 +225,7 @@ def run_flask_server(model, args):
             confidences = r.boxes.conf.cpu().numpy()
             for bbox, cls, conf in zip(boxes, classes, confidences):
                 x1, y1, x2, y2 = map(int, bbox)
-                if cls == 0:
+                if cls == 1:
                     color = (0, 255, 0)
                     label = f"good {conf:.2f}"
                     good_count += 1

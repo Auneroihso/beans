@@ -54,12 +54,12 @@ def main():
         # Process webcam feed
         webcam_index = int(args.source)
         print(f"[INFO] Starting webcam (index {webcam_index})")
-        #results = model.predict(
-           # source=webcam_index,
-            #conf=args.conf,
-            #iou=args.iou,
-            #show=True
-        #)
+        results = model.predict(
+            source=webcam_index,
+            conf=args.conf,
+            iou=args.iou,
+            show=True
+        )
     else:
         print(f"[ERROR] Invalid source: {args.source}")
         return 1
