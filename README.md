@@ -1,22 +1,22 @@
-# Bean Counter & Quality Inspector
+# Bean Sorter & Quality Inspector
 
 ## 🫘 Project Overview
 
-The **Bean Counter** is an AI-powered computer vision system designed to detect, count, and classify beans in real-time. Using a custom-trained **YOLOv11** model, it distinguishes between "good" beans (green bounding boxes) and "bad" beans (red bounding boxes), providing instant quality control statistics.
+The **Bean Sorter** is an AI-powered computer vision system designed to identify and classify beans for automated sorting. This project serves as **Part One** of a larger system, establishing the core intelligence needed to drive an electromechanical sorting mechanism.
 
-This system supports multiple input sources, including static images, video files, and live webcam feeds. It also features a **Flask-based web server** for easy integration with frontend applications.
+Using a custom-trained **YOLOv11** model, the system distinguishes between:
+- **Good Beans** (Class 1, Green): Beans that meet quality standards.
+- **Bad Beans** (Class 0, Red): Beans that are defective and should be rejected.
+
+The ultimate goal of this trained model is to interface with hardware that physically separates the beans based on these real-time classifications.
 
 ## ✨ Key Features
 
-- **Real-time Detection:** High-speed detection of beans using YOLOv11.
-- **Quality Classification:** Automatically sorts beans into 'Good' (Class 1) and 'Bad' (Class 0) categories.
-- **Counting & Statistics:** Live tracking of total, good, and bad bean counts per session.
-- **Multiple Inputs:** Works with:
-  - Live Webcam Feed
-  - Image Directories
-  - Single Image/Video Files
-- **Web Interface API:** Built-in Flask server to process base64 images from web clients.
-- **Visual Feedback:** Color-coded bounding boxes and on-screen statistics.
+- **Real-time Classification:** High-speed identification of bean quality using YOLOv11.
+- **Sorting Logic:** Clearly distinguishes 'Good' vs 'Bad' beans for downstream hardware triggers.
+- **Visual Feedback:** Color-coded bounding boxes (Green for Good, Red for Bad) for easy monitoring.
+- **Multiple Inputs:** Supports live webcam feeds, video files, and image datasets.
+- **Web Interface API:** Built-in Flask server to process images, allowing integration with external control systems or frontends.
 
 ## 🛠️ Installation
 
@@ -35,43 +35,43 @@ This system supports multiple input sources, including static images, video file
 
 ## 🚀 Usage
 
-The project provides two main scripts in the `scripts/` directory: `inference.py` (full-featured) and `run_trained_model.py` (simplified).
+The project provides two main scripts in the `scripts/` directory:
 
 ### 1. Live Webcam Inference
-To run detection using your default webcam:
+To run real-time detection (simulation of the sorting eye):
 ```bash
 python scripts/inference.py --source 0
 ```
 *Controls:* Press `q` to quit, `s` to save a screenshot.
 
 ### 2. Process an Image Directory
-To detect beans in a folder of images and save the results:
+To validate the model on a dataset:
 ```bash
 python scripts/inference.py --source data/yolo/images/test --save-txt
 ```
 
 ### 3. Run the Web Server
-Start the Flask backend for web integration:
+Start the Flask backend for integration with other systems:
 ```bash
 python scripts/inference.py --web
 ```
-The server will start at `http://0.0.0.0:5000`. You can POST images to the `/process` endpoint.
+The server starts at `http://0.0.0.0:5000` and accepts POST requests at `/process`.
 
 ### 4. Basic Run Script
-For a quick test using the simplified runner:
+For a quick simplified test:
 ```bash
 python scripts/run_trained_model.py --source 0
 ```
 
 ## ⚙️ Configuration
 
-- **Model Weights:** The default model is loaded from `trained_model/my_model.pt`.
+- **Model Weights:** Loaded from `trained_model/my_model.pt`.
 - **Thresholds:**
-  - Confidence: Default `0.25` (Adjust with `--conf`)
-  - IOU: Default `0.45` (Adjust with `--iou`)
+  - Confidence: Default `0.25` (`--conf`)
+  - IOU: Default `0.45` (`--iou`)
 - **Classes:**
-  - `0`: Bad Beans (Red)
-  - `1`: Good Beans (Green)
+  - `0`: Bad Beans (Trigger Rejection)
+  - `1`: Good Beans (Keep)
 
 ## 📂 Project Structure
 
@@ -89,13 +89,14 @@ python scripts/run_trained_model.py --source 0
 └── README.md              # Project documentation
 ```
 
-## 📝 To-Do & Roadmap
+## 📝 Roadmap (Part Two & Beyond)
 
-- [x] Implement YOLO inference and counting
-- [x] Add webcam and video support
-- [x] Integrate Flask web server
-- [ ] Improve counting accuracy for dense clusters
-- [ ] Optimize detection parameters
+This project is currently in the software identification phase. Future development includes:
+
+- [ ] **Hardware Integration:** Interface with Arduino/Raspberry Pi to control servos or air jets for physical sorting.
+- [ ] **Signal Output:** Modify scripts to send GPIO signals when "Bad" beans are detected.
+- [ ] **Speed Optimization:** Optimize inference for high-speed conveyor belts.
+- [ ] **Advanced Logic:** Tracking individual beans across frames to prevent double-counting/double-sorting.
 
 ## 📄 License
 
