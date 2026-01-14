@@ -29,7 +29,7 @@ The ultimate goal of this trained model is to interface with hardware that physi
 2. **Install Dependencies**
    Ensure you have Python 3.8+ installed. Then run:
    ```bash
-   pip install ultralytics opencv-python flask numpy
+   pip install ultralytics opencv-python flask numpy matplotlib fpdf pandas
    ```
    *(Note: `opencv-python-headless` may be used for server-only environments)*
 
